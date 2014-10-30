@@ -1,7 +1,7 @@
-makefile-autogen
+What is it?
 ================
 
-Create a Makefile from the Source Folders.
+Generator! You will get a Makefile from your Source Folders.
 
 How to use
 ==========
@@ -10,6 +10,11 @@ How to use
 2. Run it.
 `$ TARGET=foo ./autogen.sh`
 3. You will get the Makefile.
+
+Supporting Language
+===================
+
+* C++ (*.cc)
 
 License
 =======
