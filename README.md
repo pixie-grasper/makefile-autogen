@@ -14,7 +14,8 @@ How to use
 Supporting Language
 ===================
 
-* C++ (*.cc)
+* C (*.c)
+* C++ (*.cc, *.cpp)
 
 License
 =======
