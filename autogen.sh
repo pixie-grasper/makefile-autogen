@@ -4,16 +4,18 @@ usage() {
   self=`echo $0 | sed 's/^.*\/\([^\/]*\)$/\1/'`
   cat <<EOS
 Usage:
-  $self --help
-    Show this page and exit.
+  \$ $self --help
+      Show this page and exit.
 
-  $self
-    Generate a Makefile.
-    Note: $self reads \`autogen.conf' if is in readable.
+  \$ $self
+      Generate a Makefile.
+      Note: $self reads \`autogen.conf' if is in readable.
 
-  $self --set-only
-    Set variables to default (eg. TARGET, CC, CFLAGS, ...)
-    but do not generate a Makefile.
+  \$ $self --set-only
+      Set variables (eg. TARGET, CC, CFLAGS, ...)
+      but do not generate a Makefile.
+      Note: Value's priorities are;
+        default of $self < set by shell < written on autogen.conf
 
 Syntax of autogen.conf:
   var = val
@@ -21,6 +23,7 @@ Syntax of autogen.conf:
   e.g.
     CC  = clang
     CXX = clang++
+    CXXFLAGS = -std=c++11 -Weverything
 EOS
 }
 
@@ -35,24 +38,23 @@ set_default_value() {
   BUILD_DIR_REGEX=`echo $BUILD_DIR | sed 's.\/.\\\/.g'`
 }
 
+# Read the config.
+if [ -r autogen.conf ]; then
+  eval `cat autogen.conf | sed 's/^[ \t]*\([^= \t]*\)[ \t]*=[ \t]*\(.*\)$/\1="\2"/' | awk -F= '$2 {print $0}'`
+fi
+
+# Set variables to default iff. are not set.
+set_default_value
+
 if [ $# -ne 0 ]; then
   case $1 in
     "-h" | "--help" | "usage" )
       usage
       exit;;
     "--set-only" )
-      set_default_value
       exit;;
   esac
 fi
-
-# Read the config.
-if [ -r autogen.conf ]; then
-  eval `cat autogen.conf | sed 's/=/ /' | awk '$1 {print "true ${" $1 ":=" $2 "}"}'`
-fi
-
-# Set variables to default iff. are not set.
-set_default_value
 
 # Create a temporary file.
 TEMPFILE_ALL=`mktemp makefile.all.XXXXXX.tmp`
@@ -72,7 +74,7 @@ cat $TEMPFILE_C $TEMPFILE_CC $TEMPFILE_CPP > $TEMPFILE_C_ALL
 # Write to Makefile!
 # Note: Because I don't know how to know
 #         the source-directory is a subset or equals to the build-directory or not is,
-#           I've commented out `rm -rf BUILD_DIR'.
+#           I've commented out `rm -rf $BUILD_DIR'.
 sed 's/  /\t/' > Makefile <<EOS
 # Makefile generated on `date`
 
@@ -102,11 +104,11 @@ $BUILD_DIR/%.o: %.cpp
 
 .PHONY: clean distclean
 clean:
-  -rm -f \$(DEPS) \$(OBJS)
+  -@rm -f \$(DEPS) \$(OBJS)
 
 distclean: clean
-  -rm -f \$(TARGET) Makefile
-#  -rm -rf $BUILD_DIR
+  -@rm -f \$(TARGET) Makefile
+#  -@rm -rf $BUILD_DIR
 
 -include \$(DEPS)
 EOS
